@@ -134,9 +134,9 @@ if __name__ == "__main__":
     print('='*60)
 
     trigger = sys.argv[1]
-    if trigger == 'all':
+    if trigger == 'all': # 全部商品
         crawlerIcookResultsAll(time_sleep=0)
-    if trigger == 'week_hot':
+    if trigger == 'week_hot': # 當週熱門
         crawlerIcookResultsWeekHot(time_sleep=0)
 
     print('='*60)
