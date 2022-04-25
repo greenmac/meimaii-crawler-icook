@@ -1,5 +1,6 @@
 # crawler icook
 
+- domain_url = https://market.icook.tw/
 - time sleep 0 seconds
 - use concurrent.futures
 

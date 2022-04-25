@@ -16,25 +16,25 @@ now_date = datetime.strftime(now_date, '%Y%m%d')
 
 filepath = f'./data/recently_icook_{now_date}.csv'
 
-web_url = 'https://market.icook.tw/'
+domain_url = 'https://market.icook.tw/'
 
 def crawlerIcookResultsAll(time_sleep):
-    soup = getSoup(web_url)
+    soup = getSoup(domain_url)
     category_link_lists = soup.select('.categories-list__link') # 抓全部商品
 
     for category_link in category_link_lists:
         category_title = category_link.get_text()
-        category_url = web_url+category_link.get('href')
+        category_url = domain_url+category_link.get('href')
         category_text = category_title+':'+category_url
         getCategoriesInfo(category_url, time_sleep)
 
 def crawlerIcookResultsWeekHot(time_sleep):
-    soup = getSoup(web_url)
+    soup = getSoup(domain_url)
     category_link_lists = soup.select('.categories-list__link')[0:1] # 抓本週熱銷
 
     for category_link in category_link_lists:
         category_title = category_link.get_text()
-        category_url = web_url+category_link.get('href')
+        category_url = domain_url+category_link.get('href')
         category_text = category_title+':'+category_url
         getCategoriesInfo(category_url, time_sleep)
         
@@ -47,7 +47,7 @@ def getCategoriesInfo(category_url, time_sleep):
         for product_link in product_link_lists:
             product_title = (
                 product_link.select('.CategoryProduct-module__categoryProductName___3Dm_S')[0].get_text())
-            product_url = web_url+product_link.get('href')
+            product_url = domain_url+product_link.get('href')
             check_exist_lists = checkExistLists()
             if product_url in check_exist_lists:
                 print('<'*20)
