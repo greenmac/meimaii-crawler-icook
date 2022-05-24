@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from urllib.parse import unquote
 import csv
 import logging
@@ -27,6 +28,8 @@ def crawlerIcookResultsAll(time_sleep):
         category_url = domain_url+category_link.get('href')
         category_text = category_title+':'+category_url
         getCategoriesInfo(category_url, time_sleep)
+
+    dataSort()
 
 def crawlerIcookResultsWeekHot(time_sleep):
     soup = getSoup(domain_url)
@@ -109,7 +112,6 @@ def getProductsInfo(product_url, time_sleep):
     time.sleep(time_sleep)
     return product_info_dict
 
-
 def getSoup(url):
     headers = {
         'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36',
@@ -127,6 +129,33 @@ def checkExistLists():
             for row in rows:
                 check_rows.append(row[4])
     return check_rows
+
+def dataSort():
+    # pd.set_option('display.max_rows', None) # 行
+    # pd.set_option('display.max_columns', None) # 列
+
+    now_date = datetime.now()
+    diff_date = now_date-relativedelta(days=30)
+    now_date = datetime.strftime(now_date, '%Y%m%d')
+    print(diff_date)
+
+    df = pd.read_csv(f'./data/recently_icook_{now_date}.csv')
+
+    '''中文欄位'''
+    columns_name = [
+        '商品名稱',
+        '品牌名稱',
+        '累積金額',
+        '產品單價',
+        '產品網址',
+        '產品規格',
+    ]
+
+    df.columns = columns_name
+    df = df.loc[df['累積金額'].notnull()]
+    df = df.sort_values(by=['累積金額', '產品單價'], ascending=[False, False])
+    df.to_csv(f'./data/data_sort_icook_{now_date}.csv', mode='w', index=False)
+    print(df)
 
 if __name__ == "__main__":
     start_time = time.time()
