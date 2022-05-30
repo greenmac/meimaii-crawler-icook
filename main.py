@@ -40,6 +40,8 @@ def crawlerIcookResultsWeekHot(time_sleep):
         category_url = domain_url+category_link.get('href')
         category_text = category_title+':'+category_url
         getCategoriesInfo(category_url, time_sleep)
+    
+    dataSort()
         
 def getCategoriesInfo(category_url, time_sleep):
     soup = getSoup(category_url)
