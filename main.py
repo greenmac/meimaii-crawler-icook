@@ -93,7 +93,7 @@ def getProductsInfo(product_url, time_sleep):
             product_spec_lists = str(product_spec).split('<br/>')
             product_spec_lists = (
                 [i.replace('<p>', '').replace('</p>', '')
-                    .replace('<strong>', '').replace('</strong>', '')
+                    .replace('<strong>', '').replace('</strong>', '').replace('\n', '')
                         for i in product_spec_lists]
             )
     product_spec_detail_text = ','.join(product_spec_lists)
@@ -155,6 +155,8 @@ def dataSort():
 
     df.columns = columns_name
     df = df.loc[df['累積金額'].notnull()]
+    limit_amount = 500000 # 限制多少金額才列出
+    df = df[df['累積金額']>=limit_amount]
     df = df.sort_values(by=['累積金額', '產品單價'], ascending=[False, False])
     df.to_csv(f'./data/data_sort_icook_{now_date}.csv', mode='w', index=False)
     print(df)
@@ -164,11 +166,15 @@ if __name__ == "__main__":
     print('start_time:', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     print('='*60)
 
-    trigger = sys.argv[1]
-    if trigger == 'all': # 全部商品
-        crawlerIcookResultsAll(time_sleep=0)
-    if trigger == 'week_hot': # 當週熱門
-        crawlerIcookResultsWeekHot(time_sleep=0)
+    '''使用 trigger'''
+    # trigger = sys.argv[1]
+    # if trigger == 'all': # 全部商品
+    #     crawlerIcookResultsAll(time_sleep=0)
+    # if trigger == ' ': # 當週熱門
+    #     crawlerIcookResultsWeekHot(time_sleep=0)
+    
+    '''不使用 trigger'''
+    crawlerIcookResultsWeekHot(time_sleep=0)
 
     print('='*60)
     end_time = time.time()
