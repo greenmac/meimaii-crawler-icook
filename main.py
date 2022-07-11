@@ -12,6 +12,7 @@ import requests
 import sys
 import time
 
+
 now_date = datetime.now()
 now_date = datetime.strftime(now_date, '%Y%m%d')
 
