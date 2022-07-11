@@ -2,7 +2,6 @@ from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from urllib.parse import unquote
 import csv
 import logging
 import os
