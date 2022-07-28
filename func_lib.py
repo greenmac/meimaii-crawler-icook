@@ -22,4 +22,5 @@ def timer(func):
         print('start_time:', start_time_dt)
         print('end_time  :', end_time_dt)
         print('cost_time :', cost_time_dt)
+        return func(time_sleep)
     return wrap
