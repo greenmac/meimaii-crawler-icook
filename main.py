@@ -145,7 +145,7 @@ def dataSort():
     now_date = datetime.strftime(now_date, '%Y%m%d')
     print(diff_date)
 
-    df = pd.read_csv(f'./data/recently_icook_{now_date}.csv')
+    df = pd.read_csv(f'./data/recently_icook_{now_date}.csv', header=None)
 
     '''中文欄位'''
     columns_name = [
@@ -166,25 +166,24 @@ def dataSort():
     print(df)
 
 if __name__ == "__main__":
-    # start_time = time.time()
-    # print('start_time:', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    # print('='*60)
+    start_time = time.time()
+    print('start_time:', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    print('='*60)
 
-    # '''使用 trigger'''
-    # # trigger = sys.argv[1]
-    # # if trigger == 'all': # 全部商品
-    # #     crawlerIcookResultsAll(time_sleep=0)
-    # # if trigger == ' ': # 當週熱門
-    # #     crawlerIcookResultsWeekHot(time_sleep=0)
+    '''使用 trigger'''
+    # trigger = sys.argv[1]
+    # if trigger == 'all': # 全部商品
+    #     crawlerIcookResultsAll(time_sleep=0)
+    # if trigger == ' ': # 當週熱門
+    #     crawlerIcookResultsWeekHot(time_sleep=0)
     
-    # '''不使用 trigger'''
-    # crawlerIcookResultsWeekHot(time_sleep=0)
-
-    # print('='*60)
-    # end_time = time.time()
-    # print('end_time:', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    # cost_time = end_time-start_time
-    # m, s = divmod(cost_time, 60)
-    # h, m = divmod(m, 60)
-    # print(f'cost_time: {int(h)}h:{int(m)}m:{round(s, 2)}s')
+    '''不使用 trigger'''
     crawlerIcookResultsWeekHot(time_sleep=0)
+
+    print('='*60)
+    end_time = time.time()
+    print('end_time:', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    cost_time = end_time-start_time
+    m, s = divmod(cost_time, 60)
+    h, m = divmod(m, 60)
+    print(f'cost_time: {int(h)}h:{int(m)}m:{round(s, 2)}s')
