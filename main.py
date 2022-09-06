@@ -11,7 +11,7 @@ import requests
 import sys
 import time
 
-from func_lib import timer
+from utils import timer
 
 
 now_date = datetime.now()
