@@ -14,25 +14,12 @@ import time
 from utils import timer
 
 
-now_date = datetime.now()
-now_date = datetime.strftime(now_date, '%Y%m%d')
+now_date = datetime.strftime(datetime.now(), '%Y%m%d')
 
 filepath = f'./data/recently_icook_{now_date}.csv'
 
 domain_url = 'https://market.icook.tw/'
 
-@timer
-def crawlerIcookResultsAll(time_sleep):
-    soup = getSoup(domain_url)
-    category_link_lists = soup.select('.categories-list__link') # 抓全部商品
-
-    for category_link in category_link_lists:
-        category_title = category_link.get_text()
-        category_url = domain_url+category_link.get('href')
-        category_text = category_title+':'+category_url
-        getCategoriesInfo(category_url, time_sleep)
-
-    dataSort()
 
 @timer
 def crawlerIcookResultsWeekHot(time_sleep):
@@ -45,6 +32,21 @@ def crawlerIcookResultsWeekHot(time_sleep):
         category_text = category_title+':'+category_url
         getCategoriesInfo(category_url, time_sleep)
     
+    get_df_add_header_to_csv()
+    dataSort()
+
+@timer
+def crawlerIcookResultsAll(time_sleep):
+    soup = getSoup(domain_url)
+    category_link_lists = soup.select('.categories-list__link') # 抓全部商品
+
+    for category_link in category_link_lists:
+        category_title = category_link.get_text()
+        category_url = domain_url+category_link.get('href')
+        category_text = category_title+':'+category_url
+        getCategoriesInfo(category_url, time_sleep)
+    
+    get_df_add_header_to_csv()
     dataSort()
         
 def getCategoriesInfo(category_url, time_sleep):
@@ -136,6 +138,23 @@ def checkExistLists():
                 check_rows.append(row[4])
     return check_rows
 
+def get_df_add_header_to_csv():
+    columns_name = [
+        'product_title',
+        'product_brand',
+        'product_amount',
+        'product_price',
+        'product_url',
+        'product_spec_detail_text',
+    ]
+    file_path = f'./data/recently_icook_{now_date}.csv'
+    df = pd.read_csv(file_path, header=None)
+    df.columns = columns_name
+    print('='*20)
+    print(df)
+    
+    df.to_csv(file_path, index=False)
+
 def dataSort():
     # pd.set_option('display.max_rows', None) # 行
     # pd.set_option('display.max_columns', None) # 列
@@ -145,7 +164,7 @@ def dataSort():
     now_date = datetime.strftime(now_date, '%Y%m%d')
     print(diff_date)
 
-    df = pd.read_csv(f'./data/recently_icook_{now_date}.csv', header=None)
+    df = pd.read_csv(f'./data/recently_icook_{now_date}.csv')
 
     '''中文欄位'''
     columns_name = [
@@ -166,24 +185,26 @@ def dataSort():
     print(df)
 
 if __name__ == "__main__":
-    start_time = time.time()
-    print('start_time:', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    print('='*60)
+    # start_time = time.time()
+    # print('start_time:', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    # print('='*60)
 
-    '''使用 trigger'''
-    # trigger = sys.argv[1]
-    # if trigger == 'all': # 全部商品
-    #     crawlerIcookResultsAll(time_sleep=0)
-    # if trigger == ' ': # 當週熱門
-    #     crawlerIcookResultsWeekHot(time_sleep=0)
+    # '''使用 trigger'''
+    # # trigger = sys.argv[1]
+    # # if trigger == 'all': # 全部商品
+    # #     crawlerIcookResultsAll(time_sleep=0)
+    # # if trigger == ' ': # 當週熱門
+    # #     crawlerIcookResultsWeekHot(time_sleep=0)
     
-    '''不使用 trigger'''
-    crawlerIcookResultsWeekHot(time_sleep=0)
+    # '''不使用 trigger'''
+    # crawlerIcookResultsWeekHot(time_sleep=0)
 
-    print('='*60)
-    end_time = time.time()
-    print('end_time:', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    cost_time = end_time-start_time
-    m, s = divmod(cost_time, 60)
-    h, m = divmod(m, 60)
-    print(f'cost_time: {int(h)}h:{int(m)}m:{round(s, 2)}s')
+    # print('='*60)
+    # end_time = time.time()
+    # print('end_time:', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    # cost_time = end_time-start_time
+    # m, s = divmod(cost_time, 60)
+    # h, m = divmod(m, 60)
+    # print(f'cost_time: {int(h)}h:{int(m)}m:{round(s, 2)}s')
+    
+    crawlerIcookResultsWeekHot(time_sleep=0)
