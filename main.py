@@ -180,7 +180,7 @@ def dataSort():
     df = df.loc[df['累積金額'].notnull()]
     limit_amount = 500000 # 限制多少金額才列出
     df = df[df['累積金額']>=limit_amount]
-    df = df.sort_values(by=['累積金額', '產品單價'], ascending=[False, False])
+    df = df.sort_values(by=['累積金額', '商品單價'], ascending=[False, False])
     df.to_csv(f'./data/data_sort_icook_{now_date}.csv', mode='w', index=False)
     print(df)
 
