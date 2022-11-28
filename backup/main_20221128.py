@@ -22,37 +22,35 @@ domain_url = 'https://market.icook.tw/'
 
 
 @timer
-def crawler_icook_results_week_hot(time_sleep): # 本週熱銷排行
-    soup = get_soup(domain_url)
+def crawlerIcookResultsWeekHot(time_sleep):
+    soup = getSoup(domain_url)
     category_link_lists = soup.select('.categories-list__link')[0:1] # 抓本週熱銷
 
     for category_link in category_link_lists:
         category_title = category_link.get_text()
         category_url = domain_url+category_link.get('href')
         category_text = category_title+':'+category_url
-        get_categories_info(category_url, time_sleep)
+        getCategoriesInfo(category_url, time_sleep)
     
     get_df_add_header_to_csv()
-    data_sort()
-    amount_limit()
+    dataSort()
 
 @timer
-def crawler_icook_results_all(time_sleep): # 全部商品
-    soup = get_soup(domain_url)
+def crawlerIcookResultsAll(time_sleep):
+    soup = getSoup(domain_url)
     category_link_lists = soup.select('.categories-list__link') # 抓全部商品
 
     for category_link in category_link_lists:
         category_title = category_link.get_text()
         category_url = domain_url+category_link.get('href')
         category_text = category_title+':'+category_url
-        get_categories_info(category_url, time_sleep)
+        getCategoriesInfo(category_url, time_sleep)
     
     get_df_add_header_to_csv()
-    data_sort()
-    amount_limit()
+    dataSort()
         
-def get_categories_info(category_url, time_sleep):
-    soup = get_soup(category_url)
+def getCategoriesInfo(category_url, time_sleep):
+    soup = getSoup(category_url)
     product_link_lists = soup.select('.CategoryProduct-module__categoryProduct___2VsAX')
     
     url_insert_lists = []
@@ -61,21 +59,21 @@ def get_categories_info(category_url, time_sleep):
             product_title = (
                 product_link.select('.CategoryProduct-module__categoryProductName___3Dm_S')[0].get_text())
             product_url = domain_url+product_link.get('href')
-            check_exist_lists = check_exist_lists()
+            check_exist_lists = checkExistLists()
             if product_url in check_exist_lists:
                 print('<'*20)
                 print('Url exist:', product_url)
             if product_url not in check_exist_lists:
                 print('>'*20)
                 print('Url insert:', product_url)
-                # get_products_info(product_url, time_sleep) # 如果不要異步處理
-                executor.submit(get_products_info, product_url, time_sleep) # 如果要異步處理
+                # getProductsInfo(product_url, time_sleep) # 如果不要異步處理
+                executor.submit(getProductsInfo, product_url, time_sleep) # 如果要異步處理
                 url_insert_lists.append(product_url)
     print('$'*40)
     print('len_url_insert_lists:', len(url_insert_lists))
 
-def get_products_info(product_url, time_sleep):
-    soup = get_soup(product_url)
+def getProductsInfo(product_url, time_sleep):
+    soup = getSoup(product_url)
     
     product_title = soup.select('.ProductIntro-module__productIntroTitleName___2wPoJ')
     product_title = product_title[0].get_text() if product_title else ''
@@ -122,7 +120,7 @@ def get_products_info(product_url, time_sleep):
     time.sleep(time_sleep)
     return product_info_dict
 
-def get_soup(url):
+def getSoup(url):
     headers = {
         'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36',
     }
@@ -131,7 +129,7 @@ def get_soup(url):
     soup = BeautifulSoup(resp_results, 'lxml')
     return soup
 
-def check_exist_lists():
+def checkExistLists():
     check_rows = []
     if os.path.isfile(filepath):
         with open(filepath, 'r', encoding="utf-8", newline='') as csvfile:
@@ -152,16 +150,19 @@ def get_df_add_header_to_csv():
     file_path = f'./data/recently_icook_{now_date}.csv'
     df = pd.read_csv(file_path, header=None)
     df.columns = columns_name
+    print('='*20)
+    print(df)
     
     df.to_csv(file_path, index=False)
 
-def data_sort():
+def dataSort():
     # pd.set_option('display.max_rows', None) # 行
     # pd.set_option('display.max_columns', None) # 列
 
     now_date = datetime.now()
     diff_date = now_date-relativedelta(days=30)
     now_date = datetime.strftime(now_date, '%Y%m%d')
+    print(diff_date)
 
     df = pd.read_csv(f'./data/recently_icook_{now_date}.csv')
 
@@ -181,29 +182,29 @@ def data_sort():
     df = df[df['累積金額']>=limit_amount]
     df = df.sort_values(by=['累積金額', '商品單價'], ascending=[False, False])
     df.to_csv(f'./data/data_sort_icook_{now_date}.csv', mode='w', index=False)
-
-def amount_limit():
-    now_date = datetime.now()
-    now_date = datetime.strftime(now_date, '%Y%m%d')
-
-    df = pd.read_csv(f'./data/recently_icook_{now_date}.csv')
-
-    '''中文欄位'''
-    columns_name = [
-        '商品名稱',
-        '品牌名稱',
-        '累積金額',
-        '商品單價',
-        '商品網址',
-        '商品規格',
-    ]
-
-    df.columns = columns_name
-    limit_amount = 5000000 # 限制多少金額才列出
-    df = df[df['累積金額']>=limit_amount]
-    df = df.sort_values(by=['累積金額'], ascending=[False])
-    df.to_csv(f'./data/amount_limit_icook_{now_date}.csv', mode='w', index=False)
+    print(df)
 
 if __name__ == "__main__":
-    crawler_icook_results_week_hot(time_sleep=0) # 本週熱銷排行
-    # crawler_icook_results_all(time_sleep=0) # 全部商品
+    # start_time = time.time()
+    # print('start_time:', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    # print('='*60)
+
+    # '''使用 trigger'''
+    # # trigger = sys.argv[1]
+    # # if trigger == 'all': # 全部商品
+    # #     crawlerIcookResultsAll(time_sleep=0)
+    # # if trigger == ' ': # 當週熱門
+    # #     crawlerIcookResultsWeekHot(time_sleep=0)
+    
+    # '''不使用 trigger'''
+    # crawlerIcookResultsWeekHot(time_sleep=0)
+
+    # print('='*60)
+    # end_time = time.time()
+    # print('end_time:', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    # cost_time = end_time-start_time
+    # m, s = divmod(cost_time, 60)
+    # h, m = divmod(m, 60)
+    # print(f'cost_time: {int(h)}h:{int(m)}m:{round(s, 2)}s')
+    
+    crawlerIcookResultsWeekHot(time_sleep=0)
