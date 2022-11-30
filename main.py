@@ -20,7 +20,23 @@ filepath = f'./data/recently_icook_{now_date}.csv'
 
 domain_url = 'https://market.icook.tw/'
 
+'''全部商品，暫不啟用'''
+# @timer
+# def crawler_icook_results_all(time_sleep): # 全部商品
+#     soup = get_soup(domain_url)
+#     category_link_lists = soup.select('.categories-list__link') # 抓全部商品
 
+#     for category_link in category_link_lists:
+#         category_title = category_link.get_text()
+#         category_url = domain_url+category_link.get('href')
+#         category_text = category_title+':'+category_url
+#         get_categories_info(category_url, time_sleep)
+    
+#     get_df_add_header_to_csv()
+#     data_sort()
+#     amount_limit()
+
+'''本週熱銷排行'''
 @timer
 def crawler_icook_results_week_hot(time_sleep): # 本週熱銷排行
     soup = get_soup(domain_url)
@@ -36,21 +52,6 @@ def crawler_icook_results_week_hot(time_sleep): # 本週熱銷排行
     data_sort()
     amount_limit()
 
-@timer
-def crawler_icook_results_all(time_sleep): # 全部商品
-    soup = get_soup(domain_url)
-    category_link_lists = soup.select('.categories-list__link') # 抓全部商品
-
-    for category_link in category_link_lists:
-        category_title = category_link.get_text()
-        category_url = domain_url+category_link.get('href')
-        category_text = category_title+':'+category_url
-        get_categories_info(category_url, time_sleep)
-    
-    get_df_add_header_to_csv()
-    data_sort()
-    amount_limit()
-        
 def get_categories_info(category_url, time_sleep):
     soup = get_soup(category_url)
     product_link_lists = soup.select('.CategoryProduct-module__categoryProduct___2VsAX')
@@ -61,7 +62,7 @@ def get_categories_info(category_url, time_sleep):
             product_title = (
                 product_link.select('.CategoryProduct-module__categoryProductName___3Dm_S')[0].get_text())
             product_url = domain_url+product_link.get('href')
-            check_exist_lists = check_exist_lists()
+            check_exist_lists = get_check_exist_lists()
             if product_url in check_exist_lists:
                 print('<'*20)
                 print('Url exist:', product_url)
@@ -106,6 +107,18 @@ def get_products_info(product_url, time_sleep):
             )
     product_spec_detail_text = ','.join(product_spec_lists)
     
+    group_period_start = ''
+    
+    group_period_end = soup.select('.ProductFundraising-module__productFundraisingDetailInfoDetail___kOo0c')
+    group_period_end = group_period_end[1].get_text().replace('截止時間 ', '')+':00' if len(group_period_end)>=2 else ''
+
+    last_week_date = datetime.date(datetime.now())-relativedelta(days=7)
+    last_week_date = datetime.strftime(last_week_date, '%Y%m%d')
+    df_last_week = pd.read_csv(f'./data/recently_icook_{last_week_date}.csv')
+    df_last_week_url_list = df_last_week.values.tolist()
+    df_last_week_url_list = [i[4] for i in df_last_week_url_list]
+    new_product = '✅' if product_url not in df_last_week_url_list else ''
+    
     product_info_dict = {
         'product_title': product_title,
         'product_brand': product_brand,
@@ -113,6 +126,9 @@ def get_products_info(product_url, time_sleep):
         'product_price': product_price,
         'product_url': product_url,
         'product_spec_detail_text': product_spec_detail_text,
+        'group_period_start': group_period_start,
+        'group_period_end': group_period_end,
+        'new_product': new_product,
     }
     
     print('*'*20)
@@ -131,7 +147,7 @@ def get_soup(url):
     soup = BeautifulSoup(resp_results, 'lxml')
     return soup
 
-def check_exist_lists():
+def get_check_exist_lists():
     check_rows = []
     if os.path.isfile(filepath):
         with open(filepath, 'r', encoding="utf-8", newline='') as csvfile:
@@ -148,11 +164,17 @@ def get_df_add_header_to_csv():
         'product_price',
         'product_url',
         'product_spec_detail_text',
+        'group_period_start',
+        'group_period_end',
+        'new_product',
     ]
     file_path = f'./data/recently_icook_{now_date}.csv'
     df = pd.read_csv(file_path, header=None)
-    df.columns = columns_name
-    
+    df_temp = df[0:1][0].values
+    if 'product_title' in df_temp:
+        df = pd.read_csv(file_path)
+    if 'product_title' not in df_temp:
+        df.columns = columns_name
     df.to_csv(file_path, index=False)
 
 def data_sort():
@@ -173,13 +195,16 @@ def data_sort():
         '商品單價',
         '商品網址',
         '商品規格',
+        '集資開始',
+        '集資結束',
+        '新品入榜',
     ]
 
     df.columns = columns_name
     df = df.loc[df['累積金額'].notnull()]
     limit_amount = 500000 # 限制多少金額才列出
     df = df[df['累積金額']>=limit_amount]
-    df = df.sort_values(by=['累積金額', '商品單價'], ascending=[False, False])
+    df = df.sort_values(by=['新品入榜', '累積金額'], ascending=[False, False])
     df.to_csv(f'./data/data_sort_icook_{now_date}.csv', mode='w', index=False)
 
 def amount_limit():
@@ -196,14 +221,17 @@ def amount_limit():
         '商品單價',
         '商品網址',
         '商品規格',
+        '集資開始',
+        '集資結束',
+        '新品入榜',
     ]
 
     df.columns = columns_name
     limit_amount = 5000000 # 限制多少金額才列出
     df = df[df['累積金額']>=limit_amount]
-    df = df.sort_values(by=['累積金額'], ascending=[False])
+    df = df.sort_values(by=['新品入榜', '累積金額'], ascending=[False, False])
     df.to_csv(f'./data/amount_limit_icook_{now_date}.csv', mode='w', index=False)
 
 if __name__ == "__main__":
-    crawler_icook_results_week_hot(time_sleep=0) # 本週熱銷排行
     # crawler_icook_results_all(time_sleep=0) # 全部商品
+    crawler_icook_results_week_hot(time_sleep=0) # 本週熱銷排行
