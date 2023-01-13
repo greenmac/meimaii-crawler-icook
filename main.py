@@ -16,7 +16,8 @@ from utils import timer
 
 now_date = datetime.strftime(datetime.now(), '%Y%m%d')
 
-filepath = f'./data/recently_icook_{now_date}.csv'
+web_name = 'icook'
+file_path = f'./data/recently_{web_name}_{now_date}.csv'
 
 domain_url = 'https://market.icook.tw/'
 
@@ -114,7 +115,7 @@ def get_products_info(product_url, time_sleep):
 
     last_week_date = datetime.date(datetime.now())-relativedelta(days=7)
     last_week_date = datetime.strftime(last_week_date, '%Y%m%d')
-    df_last_week = pd.read_csv(f'./data/recently_icook_{last_week_date}.csv')
+    df_last_week = pd.read_csv(f'./data/recently_{web_name}_{last_week_date}.csv')
     df_last_week_url_list = df_last_week.values.tolist()
     df_last_week_url_list = [i[4] for i in df_last_week_url_list]
     new_product = '✅' if product_url not in df_last_week_url_list else ''
@@ -134,7 +135,7 @@ def get_products_info(product_url, time_sleep):
     print('*'*20)
     print(product_info_dict)
     df = pd.DataFrame(product_info_dict, index=[0])
-    df.to_csv(filepath, mode='a', header=False, index=False)
+    df.to_csv(file_path, mode='a', header=False, index=False)
     time.sleep(time_sleep)
     return product_info_dict
 
@@ -149,8 +150,8 @@ def get_soup(url):
 
 def get_check_exist_lists():
     check_rows = []
-    if os.path.isfile(filepath):
-        with open(filepath, 'r', encoding="utf-8", newline='') as csvfile:
+    if os.path.isfile(file_path):
+        with open(file_path, 'r', encoding="utf-8", newline='') as csvfile:
             rows = list(csv.reader(csvfile))
             for row in rows:
                 check_rows.append(row[4])
@@ -168,7 +169,6 @@ def get_df_add_header_to_csv():
         'group_period_end',
         'new_product',
     ]
-    file_path = f'./data/recently_icook_{now_date}.csv'
     df = pd.read_csv(file_path, header=None)
     df_temp = df[0:1][0].values
     if 'product_title' in df_temp:
@@ -185,7 +185,7 @@ def data_sort():
     diff_date = now_date-relativedelta(days=30)
     now_date = datetime.strftime(now_date, '%Y%m%d')
 
-    df = pd.read_csv(f'./data/recently_icook_{now_date}.csv')
+    df = pd.read_csv(file_path)
 
     '''中文欄位'''
     columns_name = [
@@ -205,13 +205,13 @@ def data_sort():
     limit_amount = 500000 # 限制多少金額才列出
     df = df[df['累積金額']>=limit_amount]
     df = df.sort_values(by=['新品入榜', '累積金額'], ascending=[False, False])
-    df.to_csv(f'./data/data_sort_icook_{now_date}.csv', mode='w', index=False)
+    df.to_csv(f'./data/data_sort_{web_name}_{now_date}.csv', mode='w', index=False)
 
 def amount_limit():
     now_date = datetime.now()
     now_date = datetime.strftime(now_date, '%Y%m%d')
 
-    df = pd.read_csv(f'./data/recently_icook_{now_date}.csv')
+    df = pd.read_csv(file_path)
 
     '''中文欄位'''
     columns_name = [
@@ -230,7 +230,7 @@ def amount_limit():
     limit_amount = 5000000 # 限制多少金額才列出
     df = df[df['累積金額']>=limit_amount]
     df = df.sort_values(by=['新品入榜', '累積金額'], ascending=[False, False])
-    df.to_csv(f'./data/amount_limit_icook_{now_date}.csv', mode='w', index=False)
+    df.to_csv(f'./data/amount_limit_{web_name}_{now_date}.csv', mode='w', index=False)
 
 if __name__ == "__main__":
     # crawler_icook_results_all(time_sleep=0) # 全部商品
