@@ -108,6 +108,10 @@ def get_products_info(product_url, time_sleep):
             )
     product_spec_detail_text = ','.join(product_spec_lists)
     
+    remaining_time = ''
+    
+    group_period = ''
+    
     group_period_start = ''
     
     group_period_end = soup.select('.ProductFundraising-module__productFundraisingDetailInfoDetail___kOo0c')
@@ -127,6 +131,8 @@ def get_products_info(product_url, time_sleep):
         'product_price': product_price,
         'product_url': product_url,
         'product_spec_detail_text': product_spec_detail_text,
+        'remaining_time': remaining_time,
+        'group_period': group_period,
         'group_period_start': group_period_start,
         'group_period_end': group_period_end,
         'new_product': new_product,
@@ -165,6 +171,8 @@ def get_df_add_header_to_csv():
         'product_price',
         'product_url',
         'product_spec_detail_text',
+        'remaining_time',
+        'group_period',
         'group_period_start',
         'group_period_end',
         'new_product',
@@ -195,6 +203,8 @@ def data_sort():
         '商品單價',
         '商品網址',
         '商品規格',
+        '剩餘時間',
+        '集資期間(30天內開團的商品)',
         '集資開始',
         '集資結束',
         '新品入榜',
@@ -221,6 +231,8 @@ def amount_limit():
         '商品單價',
         '商品網址',
         '商品規格',
+        '剩餘時間',
+        f'集資期間({now_date} 截止)',
         '集資開始',
         '集資結束',
         '新品入榜',
