@@ -3,7 +3,6 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import csv
-import json
 import numpy as np
 import os
 import pandas as pd
@@ -21,7 +20,7 @@ last_week_date = datetime.strftime(last_week_date, '%Y%m%d')
 web_name = 'icook'
 file_path = f'./data/recently_{web_name}_{now_date}.csv'
 
-domain_url = 'https://market.icook.tw/'
+domain_url = 'https://market.icook.tw'
 
 '''全部商品，暫不啟用'''
 # @timer
@@ -57,12 +56,14 @@ def crawler_icook_results_week_hot(time_sleep): # 本週熱銷排行
 
 def get_categories_info(category_url, time_sleep):
     soup = get_soup(category_url)
-    product_url_lists = soup.find('script', {'type': 'application/ld+json'}).get_text()
-    product_url_lists = json.loads(product_url_lists)['@graph'][3]['itemListElement']
-    product_url_lists = [i['url'] for i in product_url_lists]
+    product_link_lists = soup.select('.CategoryProduct-module__categoryProduct___2VsAX')
     
+    url_insert_lists = []
     with ThreadPoolExecutor(max_workers=8) as executor:
-        for product_url in product_url_lists:
+        for product_link in product_link_lists:
+            product_title = (
+                product_link.select('.CategoryProduct-module__categoryProductName___3Dm_S')[0].get_text())
+            product_url = domain_url+product_link.get('href')
             check_exist_lists = get_check_exist_lists()
             if product_url in check_exist_lists:
                 print('<'*20)
@@ -72,28 +73,53 @@ def get_categories_info(category_url, time_sleep):
                 print('Url insert:', product_url)
                 # get_products_info(product_url, time_sleep) # 如果不要異步處理
                 executor.submit(get_products_info, product_url, time_sleep) # 如果要異步處理
+                url_insert_lists.append(product_url)
+    print('$'*40)
+    print('len_url_insert_lists:', len(url_insert_lists))
 
 def get_products_info(product_url, time_sleep):
     soup = get_soup(product_url)
-    data = soup.select('.js-react-on-rails-component')[2]
-    data = json.loads(data.get_text())
     
-    product = data['product']
-
-    product_title = product['name']
-    product_brand = product['brand_name']
-    product_amount = data['fundraisingTotal']    
-    product_price = sorted(product['skus'], key=lambda x:x['position'])[0]['price']
+    product_title = soup.select('.ProductIntro-module__productIntroTitleName___2wPoJ')
+    product_title = product_title[0].get_text() if product_title else ''
+    
+    product_brand = soup.select('.ProductIntro-module__productIntroBrand___3fscS')
+    product_brand = product_brand[0].get_text() if product_brand else ''
+    
+    product_amount = soup.select('.ProductFundraising-module__productFundraisingIsSellingPriceTotal___2QDNR')
+    product_amount = product_amount[0].get_text() if product_amount else ''
+    product_amount = int(''.join(re.findall('\d*', product_amount)))  if product_amount else '' # 如果要轉換純數字
+        
+    product_price = soup.select('.ProductItemsMobile-module__productItemsMobileDetailPrice___3Edqg')
+    product_price = product_price[0].get_text().split('NT$ ')[1] if product_price else ''
+    product_price = int(''.join(re.findall('\d*', product_price)))  if product_price else '' # 如果要轉換純數字
+    
     product_url = product_url
-    product_spec_detail_text = product['description']
+
+    product_spec_detail = soup.select('p')
+    product_spec_lists = ''
+    for product_spec in product_spec_detail:
+        product_spec_title = product_spec.get_text()
+        if '品名' in product_spec_title:     
+            product_spec_lists = str(product_spec).split('<br/>')
+            product_spec_lists = (
+                [i.replace('<p>', '').replace('</p>', '')
+                    .replace('<strong>', '').replace('</strong>', '').replace('\n', '')
+                        for i in product_spec_lists]
+            )
+    product_spec_detail_text = ','.join(product_spec_lists)
+    
     remaining_time = ''
+    
     group_period = ''
-    group_period_start = product['started_at'].replace('.000+08:00', '').replace('T', ' ')
-    group_period_end = product['ended_at'].replace('.000+08:00', '').replace('T', ' ')
+    
+    group_period_start = ''
+    
+    group_period_end = soup.select('.ProductFundraising-module__productFundraisingDetailInfoDetail___kOo0c')
+    group_period_end = group_period_end[1].get_text().replace('截止時間 ', '')+':00' if len(group_period_end)>=2 else ''
 
     df_file_path = f'./data/recently_{web_name}_{last_week_date}.csv'
     df_last_week_url_list = get_df_last_week_url_list(df_file_path)
-    
     new_product = '✅' if product_url not in df_last_week_url_list else ''
     
     product_info_dict = {
@@ -161,7 +187,6 @@ def get_df_add_header_to_csv():
         df = pd.read_csv(file_path)
     if 'product_title' not in df_temp:
         df.columns = columns_name
-    df = df.sort_values(by=['new_product', 'product_amount'], ascending=[False, False])
     df.to_csv(file_path, index=False)
 
 def data_sort():
