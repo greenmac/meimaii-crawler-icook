@@ -16,16 +16,14 @@ from utils import timer
 
 today = datetime.now()
 current_weekday = today.weekday()
+this_monday = today-relativedelta(days=current_weekday)
+last_week_sunday = this_monday-relativedelta(days=7)
 
-last_today = today-relativedelta(days=7)
-this_sunday = last_today+relativedelta(days=7-current_weekday-1)
-last_sunday = last_today+relativedelta(days=7-current_weekday-8)
-
-this_sunday_str = this_sunday.strftime("%Y%m%d")
-last_sunday_str = last_sunday.strftime("%Y%m%d")
+now_date = datetime.strftime(this_monday, '%Y%m%d')
+last_week_date = datetime.strftime(last_week_sunday, '%Y%m%d')
 
 web_name = 'icook'
-file_path = f'./data/recently_{web_name}_{this_sunday_str}.csv'
+file_path = f'./data/recently_{web_name}_{now_date}.csv'
 
 domain_url = 'https://market.icook.tw/'
 
@@ -97,7 +95,7 @@ def get_products_info(product_url, time_sleep):
     group_period_start = product['started_at'].replace('.000+08:00', '').replace('T', ' ')
     group_period_end = product['ended_at'].replace('.000+08:00', '').replace('T', ' ')
 
-    df_file_path = f'./data/recently_{web_name}_{last_sunday_str}.csv'
+    df_file_path = f'./data/recently_{web_name}_{last_week_date}.csv'
     df_last_week_url_list = get_df_last_week_url_list(df_file_path)
     new_product = '✅' if product_url not in df_last_week_url_list else ''
     
@@ -192,12 +190,12 @@ def data_sort():
     limit_amount = 500000 # 限制多少金額才列出
     df = df[df['累積金額']>=limit_amount]
 
-    df_file_path = f'./data/data_sort_{web_name}_{last_sunday_str}.csv'
+    df_file_path = f'./data/data_sort_{web_name}_{last_week_date}.csv'
     df_last_week_url_list = get_df_last_week_url_list(df_file_path)
     df['新品入榜'] = np.where(~df['商品網址'].isin(df_last_week_url_list)==True, '✅', '')
 
     df = df.sort_values(by=['新品入榜', '累積金額'], ascending=[False, False])
-    df.to_csv(f'./data/data_sort_{web_name}_{this_sunday_str}.csv', mode='w', index=False)
+    df.to_csv(f'./data/data_sort_{web_name}_{now_date}.csv', mode='w', index=False)
 
 def amount_limit():
     df = pd.read_csv(file_path)
@@ -211,7 +209,7 @@ def amount_limit():
         '商品網址',
         '商品規格',
         '剩餘時間',
-        f'集資期間({this_sunday_str} 截止)',
+        f'集資期間({now_date} 截止)',
         '集資開始',
         '集資結束',
         '新品入榜',
@@ -221,12 +219,12 @@ def amount_limit():
     limit_amount = 5000000 # 限制多少金額才列出
     df = df[df['累積金額']>=limit_amount]
     
-    df_file_path = f'./data/amount_limit_{web_name}_{last_sunday_str}.csv'
+    df_file_path = f'./data/amount_limit_{web_name}_{last_week_date}.csv'
     df_last_week_url_list = get_df_last_week_url_list(df_file_path)
     df['新品入榜'] = np.where(~df['商品網址'].isin(df_last_week_url_list)==True, '✅', '')
 
     df = df.sort_values(by=['新品入榜', '累積金額'], ascending=[False, False])
-    df.to_csv(f'./data/amount_limit_{web_name}_{this_sunday_str}.csv', mode='w', index=False)
+    df.to_csv(f'./data/amount_limit_{web_name}_{now_date}.csv', mode='w', index=False)
 
 if __name__ == "__main__":
     # crawler_icook_results_all(time_sleep=0) # 全部商品
